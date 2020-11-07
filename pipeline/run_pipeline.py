@@ -5,6 +5,7 @@ import pickle
 import string
 import os
 import re
+import csv
 import argparse
 import spacy
 
@@ -20,11 +21,11 @@ FILENAME = args.input
 MODEL = pickle.load(open(args.model,'rb'))
 KEYWORDS = 'china|chinese|asia|asian|chinazi|chink|chingchong|gook|wuflu|wu flu|kungflu|kung flu|wuhan'
 
-data = pd.read_csv(FILENAME, encoding='utf-8', delimiter='\t', usecols=[1, 4, 5], parse_dates=[1])
+data = pd.read_csv(FILENAME, encoding='utf-8', delimiter='\t', usecols=[1, 4, 5], parse_dates=[1], quoting=csv.QUOTE_NONE)
 data.columns = ['tweet_date', 'tweet_full_text', 'tweet_lang']
 
-data = data[data['tweet_full_text'].str.contains(KEYWORDS, flags=re.IGNORECASE, regex=True)]
-data = data[data['tweet_lang'].str.match('en')]
+data = data[data['tweet_full_text'].str.contains(KEYWORDS, flags=re.IGNORECASE, regex=True).fillna(False)]
+data = data[data['tweet_lang'].str.match('en').fillna(False)]
 
 p.set_options(p.OPT.URL, p.OPT.MENTION)
 nlp = spacy.load('en_core_web_sm')
