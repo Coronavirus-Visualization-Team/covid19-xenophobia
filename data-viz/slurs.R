@@ -1,44 +1,31 @@
 library(ggplot2)
 
 setwd("/Users/michelle/Documents/covid19-xenophobia/data-viz")
-data <- read.csv("../slur-data/FreqCSV_Sinophobia.csv")
+data <- read.csv("../slur-data/slur_counts.csv")
 
-data$date <- as.Date(data$date)
+data$date <- as.Date(data$date, format= "%Y-%m-%d")
+data <- data[(data$date >= "2020-02-01"),]
+data$total <- rowSums(data[,2:10])
 
-ggplot(data, aes(date, totalCount)) +
+ggplot(data, aes(date, total)) +
   geom_line(na.rm = TRUE) +
-  xlab("date") +
-  xlim(as.Date("2020-01-27"), NA) +
-  ylab("slur count") +
-  scale_y_continuous(breaks = round(seq(min(data$totalCount), max(data$totalCount),
-                                        by = 50000), 1)) + theme_bw() 
+  xlab("Date (2020)") +
+  ylab("Number of Tweets Containing Slurs") +
+  scale_x_date(date_breaks = "1 month", minor_breaks = NULL, date_labels = "%b", limits = c(as.Date("2020-02-01"), NA)) +
+  scale_y_continuous(breaks = round(seq(0, max(data$total),
+                                        by = 100), 1)) + theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
 
-# scale_x_continuous(name = "date", 
-#                    limits = c(as.Date("2020-01-27"), NA), 
-#                    breaks = round(seq(min(data$date), max(data$date), 
-#                                       by = as.difftime(30, units="days")), 1))
-# theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+slur <- colnames(data)[2:10]
+count <- unname(colSums(data[2:10]))
+top_data <- data.frame(slur, count)
+top_data <- top_data[(top_data$count > 0),]
 
-ggplot(data, aes(date, neg_count / total)) +
-  geom_line(na.rm = TRUE) +
-  xlab("date") +
-  xlim(as.Date("2020-01-27"), NA) +
-  ylab("negative tweet proportion") +
-  scale_y_continuous(breaks = round(seq(min(data$neg_count / data$total), max(data$neg_count / data$total),
-                                        by = 0.1), 1)) + theme_bw() +
-  geom_vline(xintercept = as.Date(c(
-    "2020-01-30",
-    "2020-02-07",
-    "2020-03-09",
-    "2020-03-18",
-    "2020-03-26",
-    "2020-04-16",
-    "2020-06-21",
-    "2020-07-10",
-    "2020-07-21",
-    "2020-09-16",
-    "2020-10-02"
-  )),
-  linetype = 4, colour = "black")
-
+ggplot(top_data, aes(reorder(slur, count), count)) +
+  geom_bar(stat="identity") +
+  xlab("Slur") +
+  ylab("Number of Tweets Containing Slur") + 
+  scale_y_continuous(trans = "log10") + theme_bw() +
+  coord_flip()
 
